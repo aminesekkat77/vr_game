@@ -78,6 +78,15 @@ namespace MartialArtsGame
             hands.targetCamera = (fightCamera != null) ? fightCamera.GetComponent<Camera>() : Camera.main;
             if (game != null) game.fightHands = hands;
 
+            // Sync the XR Origin (HMD rig) to the player's XZ each frame so the
+            // user's head ends up where the gameplay player is. Floor tracking
+            // mode is forced inside the script so the Quest reports a real eye
+            // height rather than y=0.
+            var syncGO = new GameObject("VrPlayerSync");
+            syncGO.transform.SetParent(transform, false);
+            var sync = syncGO.AddComponent<VrPlayerSync>();
+            sync.player = playerTransform;
+
             // Wire replay
             if (replay != null) { replay.fightCamera = fightCamera; replay.endScreenRoot = endScreen; }
             // Wire trailer
@@ -120,9 +129,16 @@ namespace MartialArtsGame
 
         MainMenuController BuildMenu()
         {
-            // Keep tracked device raycaster so XR rays can drive UI.
-            var canvasGO = NewCanvas("MenuCanvas", 5);
-            canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
+            // World-space canvas so the HMD renders the menu inside the scene.
+            // Positioned 2.5 m in front of the player spawn at eye height,
+            // facing back toward the player so the panel is readable both in
+            // VR and from the non-VR cinematic camera (which we point at the
+            // same spot in SimpleCameraController).
+            var canvasGO = NewWorldCanvas("MenuCanvas",
+                new Vector3(10f, 1.65f, 0.5f),
+                new Vector3(0f, 180f, 0f),
+                scale: 0.0020f);
+            // NewWorldCanvas already adds a TrackedDeviceGraphicRaycaster.
             var menu = canvasGO.AddComponent<MainMenuController>();
 
             // Outer dim (slight world tint)

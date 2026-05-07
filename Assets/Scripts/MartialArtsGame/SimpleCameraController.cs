@@ -90,11 +90,14 @@ namespace MartialArtsGame
             {
                 case Mode.Menu:
                 {
+                    // World-space menu sits at (10, 1.65, 0.5) facing -Z.
+                    // Park the cinematic camera in front of it (same axis the
+                    // VR user uses) so non-VR builds and the editor preview
+                    // see the menu head-on.
                     menuOrbitT += Time.unscaledDeltaTime * 0.18f;
-                    float drift = Mathf.Sin(menuOrbitT) * menuDrift;
-                    Vector3 center = new Vector3(10f, 0f, 0f);
-                    desiredPos = center + Vector3.left * menuSideDistance + Vector3.up * menuCameraHeight + Vector3.forward * drift;
-                    desiredRot = Quaternion.LookRotation((center + Vector3.up * lookHeight) - desiredPos, Vector3.up);
+                    Vector3 menuPanel = new Vector3(10f, 1.65f, 0.5f);
+                    desiredPos = menuPanel + new Vector3(0f, 0.05f, -3.6f + Mathf.Sin(menuOrbitT) * menuDrift);
+                    desiredRot = Quaternion.LookRotation(menuPanel - desiredPos, Vector3.up);
                     break;
                 }
                 case Mode.Fight:

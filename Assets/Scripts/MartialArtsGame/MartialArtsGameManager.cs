@@ -31,10 +31,47 @@ namespace MartialArtsGame
 
         public GameState State { get; private set; } = GameState.Menu;
 
+        // Names the procedural rig auto-creates on a fighter when those
+        // children don't already exist. On the AI's "Male Karate" prefab they
+        // don't exist, so the rig spawns four bright-red primitive cubes that
+        // hover on the opponent — those are the red squares we want gone.
+        static readonly string[] RigLimbNames = { "L_Hand", "R_Hand", "L_Foot", "R_Foot" };
+        bool rigCubesHidden;
+
         void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+        }
+
+        // Hide the red primitive cubes the ProceduralMartialArtsAnimator spawns
+        // when it can't find authored children with its expected names. The
+        // transforms keep animating underneath (so attacks still resolve);
+        // they're just invisible. The player's authored feet/hands meshes are
+        // untouched, so the player keeps their grounded foot representation.
+        void HideRigCubes()
+        {
+            if (rigCubesHidden) return;
+            var rigs = FindObjectsByType<ProceduralMartialArtsAnimator>(FindObjectsSortMode.None);
+            foreach (var rig in rigs)
+            {
+                if (rig == null) continue;
+                foreach (var name in RigLimbNames)
+                {
+                    var t = rig.transform.Find(name);
+                    if (t == null) continue;
+                    var mf = t.GetComponent<MeshFilter>();
+                    // Only kill renderers on the auto-built primitive cubes —
+                    // authored limb meshes (skinned, custom-named meshes) are
+                    // safe and stay visible.
+                    if (mf != null && mf.sharedMesh != null && mf.sharedMesh.name == "Cube")
+                    {
+                        var r = t.GetComponent<Renderer>();
+                        if (r != null) r.enabled = false;
+                    }
+                }
+            }
+            rigCubesHidden = true;
         }
 
         void Start()
@@ -86,6 +123,9 @@ namespace MartialArtsGame
             if (fightCamera != null) fightCamera.UseFightView();
             // Show the visible "controllers" the moment Start is pressed.
             if (fightHands != null) fightHands.SetActive(true);
+            // Suppress the procedural rig's auto-built red cubes (player keeps
+            // its authored foot / body meshes visible).
+            HideRigCubes();
 
             roundTimer = roundDuration;
             currentRound = 1;

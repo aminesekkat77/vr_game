@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR;
 
 namespace MartialArtsGame
 {
@@ -45,6 +47,26 @@ namespace MartialArtsGame
         public int attacksLanded = 0;
         public float lastAttackTime = 0f;
 
+        // XR controller edge tracking — UnityEngine.XR.InputDevices reports
+        // current state, so we cache the previous frame's value to detect a
+        // press-down. Quest 3 triggers come in via OpenXR / Oculus runtime
+        // without any extra InputAction wiring needed.
+        bool prevXrLeftTrigger;
+        bool prevXrRightTrigger;
+        bool prevXrLeftPrimary;
+        bool prevXrRightPrimary;
+        bool prevXrLeftSecondary;
+        bool prevXrRightSecondary;
+        bool prevXrLeftStickClick;
+        bool prevXrRightStickClick;
+        bool xrLeftTriggerDown;
+        bool xrRightTriggerDown;
+        bool xrSpecialDown;
+        bool xrKickDown;
+        bool xrDodgeDown;
+        bool xrAnyGripHeld;
+        static readonly List<InputDevice> s_XrDeviceBuf = new List<InputDevice>(2);
+
         public void PrepareForFight(MartialArtStyle newStyle)
         {
             style = newStyle;
@@ -65,10 +87,57 @@ namespace MartialArtsGame
             stamina = Mathf.Min(maxStamina, stamina + staminaRegenPerSec * Time.deltaTime);
             if (isBlocking) stamina = Mathf.Max(0f, stamina - blockStaminaDrainPerSec * Time.deltaTime);
 
+            PollXrButtons();
+
             if (!combatActive) return;
             HandleMovement();
             HandleCombatInput();
             FaceOpponent();
+        }
+
+        void PollXrButtons()
+        {
+            // Read raw current-frame state.
+            bool lTrig  = ReadXrButton(false, CommonUsages.triggerButton);
+            bool rTrig  = ReadXrButton(true,  CommonUsages.triggerButton);
+            bool lGrip  = ReadXrButton(false, CommonUsages.gripButton);
+            bool rGrip  = ReadXrButton(true,  CommonUsages.gripButton);
+            bool lPrim  = ReadXrButton(false, CommonUsages.primaryButton);    // X
+            bool rPrim  = ReadXrButton(true,  CommonUsages.primaryButton);    // A
+            bool lSec   = ReadXrButton(false, CommonUsages.secondaryButton);  // Y
+            bool rSec   = ReadXrButton(true,  CommonUsages.secondaryButton);  // B
+            bool lStick = ReadXrButton(false, CommonUsages.primary2DAxisClick);
+            bool rStick = ReadXrButton(true,  CommonUsages.primary2DAxisClick);
+
+            // Convert to edges. Punches map directly to triggers; special is
+            // either primary button down; kick is either secondary button
+            // down; dodge is either thumbstick click down; block is grip held.
+            xrLeftTriggerDown  = lTrig && !prevXrLeftTrigger;
+            xrRightTriggerDown = rTrig && !prevXrRightTrigger;
+            xrSpecialDown      = (lPrim && !prevXrLeftPrimary)   || (rPrim && !prevXrRightPrimary);
+            xrKickDown         = (lSec  && !prevXrLeftSecondary) || (rSec  && !prevXrRightSecondary);
+            xrDodgeDown        = (lStick && !prevXrLeftStickClick) || (rStick && !prevXrRightStickClick);
+            xrAnyGripHeld      = lGrip || rGrip;
+
+            prevXrLeftTrigger     = lTrig;
+            prevXrRightTrigger    = rTrig;
+            prevXrLeftPrimary     = lPrim;
+            prevXrRightPrimary    = rPrim;
+            prevXrLeftSecondary   = lSec;
+            prevXrRightSecondary  = rSec;
+            prevXrLeftStickClick  = lStick;
+            prevXrRightStickClick = rStick;
+        }
+
+        static bool ReadXrButton(bool right, InputFeatureUsage<bool> usage)
+        {
+            var side = right ? InputDeviceCharacteristics.Right : InputDeviceCharacteristics.Left;
+            InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.Controller | side, s_XrDeviceBuf);
+            for (int i = 0; i < s_XrDeviceBuf.Count; i++)
+            {
+                if (s_XrDeviceBuf[i].TryGetFeatureValue(usage, out bool pressed) && pressed) return true;
+            }
+            return false;
         }
 
         void HandleMovement()
@@ -122,10 +191,12 @@ namespace MartialArtsGame
 
         void HandleCombatInput()
         {
-            isBlocking = Input.GetKey(KeyCode.LeftShift) && stamina > 1f;
+            // Block: LeftShift on keyboard OR either grip held on Quest.
+            isBlocking = (Input.GetKey(KeyCode.LeftShift) || xrAnyGripHeld) && stamina > 1f;
             if (animatorRig != null) animatorRig.SetGuard(isBlocking);
 
-            if (Input.GetKeyDown(KeyCode.Space) && !isDodging && stamina >= dodgeStaminaCost)
+            // Dodge: Space on keyboard OR thumbstick click on Quest.
+            if ((Input.GetKeyDown(KeyCode.Space) || xrDodgeDown) && !isDodging && stamina >= dodgeStaminaCost)
             {
                 isDodging = true;
                 dodgeTimer = 0.35f;
@@ -137,10 +208,15 @@ namespace MartialArtsGame
 
             if (Time.time < attackLockUntil) return;
 
-            if (Input.GetMouseButtonDown(0)) TryAttack(MoveType.LeftPunch);
-            else if (Input.GetMouseButtonDown(1)) TryAttack(MoveType.RightPunch);
-            else if (Input.GetKeyDown(KeyCode.E)) TryAttack(MoveType.Kick);
-            else if (Input.GetKeyDown(KeyCode.Q)) TryAttack(MoveType.Special);
+            // Quest mapping (matches the user's chosen scheme):
+            //   Left trigger  -> Left punch
+            //   Right trigger -> Right punch
+            //   Secondary (B/Y) -> Kick
+            //   Primary  (A/X) -> Special
+            if (Input.GetMouseButtonDown(0) || xrLeftTriggerDown)       TryAttack(MoveType.LeftPunch);
+            else if (Input.GetMouseButtonDown(1) || xrRightTriggerDown) TryAttack(MoveType.RightPunch);
+            else if (Input.GetKeyDown(KeyCode.E) || xrKickDown)         TryAttack(MoveType.Kick);
+            else if (Input.GetKeyDown(KeyCode.Q) || xrSpecialDown)      TryAttack(MoveType.Special);
         }
 
         void TryAttack(MoveType slot)
