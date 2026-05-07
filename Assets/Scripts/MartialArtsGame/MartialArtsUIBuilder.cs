@@ -136,7 +136,7 @@ namespace MartialArtsGame
             // same spot in SimpleCameraController).
             var canvasGO = NewWorldCanvas("MenuCanvas",
                 new Vector3(10f, 1.65f, 0.5f),
-                new Vector3(0f, 180f, 0f),
+                new Vector3(0f, 0f, 0f),
                 scale: 0.0020f);
             // NewWorldCanvas already adds a TrackedDeviceGraphicRaycaster.
             var menu = canvasGO.AddComponent<MainMenuController>();
