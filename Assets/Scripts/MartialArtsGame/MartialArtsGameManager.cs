@@ -27,6 +27,7 @@ namespace MartialArtsGame
         public TrailerModeController trailer;
         public ScoreAndStatsManager stats;
         public SimpleCameraController fightCamera;
+        public FightHandsVisualizer fightHands;
 
         public GameState State { get; private set; } = GameState.Menu;
 
@@ -71,6 +72,7 @@ namespace MartialArtsGame
             if (trailer != null) trailer.StopTrailer();
             if (replay != null) replay.HideAll();
             if (fightCamera != null) fightCamera.UseMenuView();
+            if (fightHands != null) fightHands.SetActive(false);
         }
 
         public void StartFight()
@@ -82,6 +84,8 @@ namespace MartialArtsGame
             if (opponent != null) opponent.PrepareForFight(selectedStyle, selectedDifficulty);
             if (stats != null) stats.ResetRound();
             if (fightCamera != null) fightCamera.UseFightView();
+            // Show the visible "controllers" the moment Start is pressed.
+            if (fightHands != null) fightHands.SetActive(true);
 
             roundTimer = roundDuration;
             currentRound = 1;
@@ -110,6 +114,7 @@ namespace MartialArtsGame
             State = GameState.RoundEnd;
             if (player != null) player.SetCombatActive(false);
             if (opponent != null) opponent.SetCombatActive(false);
+            if (fightHands != null) fightHands.SetActive(false);
 
             string outcome;
             if (player != null && opponent != null)

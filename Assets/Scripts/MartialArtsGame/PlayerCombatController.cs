@@ -66,33 +66,9 @@ namespace MartialArtsGame
             if (isBlocking) stamina = Mathf.Max(0f, stamina - blockStaminaDrainPerSec * Time.deltaTime);
 
             if (!combatActive) return;
-            HandleLook();
             HandleMovement();
             HandleCombatInput();
             FaceOpponent();
-        }
-
-        void HandleLook()
-        {
-            // Mouse look with keyboard fallback (Left/Right arrows).
-            float yaw = Input.GetAxis("Mouse X") * lookSensitivity;
-            if (Mathf.Abs(yaw) < 0.0001f)
-            {
-                if (Input.GetKey(KeyCode.LeftArrow)) yaw = -90f * Time.deltaTime;
-                else if (Input.GetKey(KeyCode.RightArrow)) yaw = 90f * Time.deltaTime;
-            }
-            transform.Rotate(0f, yaw, 0f, Space.World);
-            if (aim != null)
-            {
-                float mousePitch = Input.GetAxis("Mouse Y") * lookSensitivity;
-                if (Mathf.Abs(mousePitch) < 0.0001f)
-                {
-                    if (Input.GetKey(KeyCode.UpArrow)) mousePitch = -75f * Time.deltaTime;
-                    else if (Input.GetKey(KeyCode.DownArrow)) mousePitch = 75f * Time.deltaTime;
-                }
-                pitch = Mathf.Clamp(pitch - mousePitch, -35f, 35f);
-                aim.localRotation = Quaternion.Euler(pitch, 0f, 0f);
-            }
         }
 
         void HandleMovement()

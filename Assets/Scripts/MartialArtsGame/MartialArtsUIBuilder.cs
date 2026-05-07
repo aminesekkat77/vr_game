@@ -70,6 +70,14 @@ namespace MartialArtsGame
             if (game != null) game.opponent = opponent;
             if (game != null) game.fightCamera = fightCamera;
 
+            // Spawn the visible "VR controller" hand widgets parented to the
+            // active camera. They stay hidden until StartFight() flips them on.
+            var handsGO = new GameObject("FightHandsVisualizer");
+            handsGO.transform.SetParent(transform, false);
+            var hands = handsGO.AddComponent<FightHandsVisualizer>();
+            hands.targetCamera = (fightCamera != null) ? fightCamera.GetComponent<Camera>() : Camera.main;
+            if (game != null) game.fightHands = hands;
+
             // Wire replay
             if (replay != null) { replay.fightCamera = fightCamera; replay.endScreenRoot = endScreen; }
             // Wire trailer
@@ -82,7 +90,11 @@ namespace MartialArtsGame
             {
                 player.opponent = opponent;
                 player.opponentTransform = opponentTransform;
-                player.aim = Camera.main != null ? Camera.main.transform : null;
+                // Intentionally do NOT bind aim to Camera.main.transform: the
+                // SimpleCameraController owns the camera transform and any other
+                // script writing to it produces inter-frame fighting (visible as
+                // shake / freeze when followLerp is low).
+                player.aim = null;
                 player.animatorRig = playerRig;
                 player.audioSource = player.GetComponent<AudioSource>();
             }
