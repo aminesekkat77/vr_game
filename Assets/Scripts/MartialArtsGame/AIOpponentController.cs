@@ -26,6 +26,7 @@ namespace MartialArtsGame
         public Transform playerTransform;
         public PlayerCombatController player;
         public ProceduralMartialArtsAnimator animatorRig;
+        public Animator animator;
         public AudioSource audioSource;
         public AudioClip swingClip;
         public AudioClip blockClip;
@@ -187,7 +188,9 @@ namespace MartialArtsGame
             var move = moves[Random.Range(0, moves.Count)];
             stamina -= move.staminaCost;
             attackLockUntil = Time.time + move.startupTime + move.activeTime + move.recoveryTime + attackCooldown * (0.7f + 0.4f * Random.value);
+            Debug.Log("AI attacking with: " + move.moveType + ", animatorRig: " + (animatorRig != null));
             if (animatorRig != null) animatorRig.PlayAttack(move.moveType);
+            if (animator != null) animator.SetTrigger("punch");
             if (audioSource != null && swingClip != null) audioSource.PlayOneShot(swingClip, 0.6f);
 
             StartCoroutine(ResolveAttack(move));

@@ -26,7 +26,7 @@ public class PlayerCombat : MonoBehaviour
     {
         if (currentVelocity >= minPunchVelocity)
         {
-            Debug.Log("💥 HIT !");
+            Debug.Log("💥Player was HIT !");
         }
     }
 }

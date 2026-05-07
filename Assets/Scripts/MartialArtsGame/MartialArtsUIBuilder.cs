@@ -104,6 +104,7 @@ namespace MartialArtsGame
                 opponent.player = player;
                 opponent.playerTransform = playerTransform;
                 opponent.animatorRig = opponentRig;
+                opponent.animator = opponent.GetComponent<Animator>();
                 opponent.audioSource = opponent.GetComponent<AudioSource>();
             }
 

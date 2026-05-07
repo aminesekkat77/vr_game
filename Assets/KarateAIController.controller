@@ -61,7 +61,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Punch
+    m_ConditionEvent: punch
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 4773685483298410533}
@@ -86,7 +86,7 @@ AnimatorController:
   m_Name: KarateAIController
   serializedVersion: 5
   m_AnimatorParameters:
-  - m_Name: Punch
+  - m_Name: punch
     m_Type: 9
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -144,10 +144,10 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: 9140454621673957346}
-    m_Position: {x: 1.8275757, y: 221.6284, z: 0}
+    m_Position: {x: 30, y: 230, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 4773685483298410533}
-    m_Position: {x: 325.49734, y: 157.3094, z: 0}
+    m_Position: {x: 330, y: 120, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -2905027409802848725}
     m_Position: {x: -210, y: 160, z: 0}
@@ -208,7 +208,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: 62b6b8b4a64d3214f8d049f5d38f8fc5, type: 3}
+  m_Motion: {fileID: -203655887218126122, guid: 22516fc5a414e364bb564e9ff48d2713, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

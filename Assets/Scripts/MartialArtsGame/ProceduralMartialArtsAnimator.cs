@@ -56,6 +56,7 @@ namespace MartialArtsGame
             rightHand = MakeLimb("R_Hand",  rightHandRest, new Vector3(0.10f, 0.10f, 0.10f));
             leftFoot  = MakeLimb("L_Foot",  leftFootRest,  new Vector3(0.13f, 0.06f, 0.18f));
             rightFoot = MakeLimb("R_Foot",  rightFootRest, new Vector3(0.13f, 0.06f, 0.18f));
+            Debug.Log("Built limbs on " + gameObject.name + ": LH=" + (leftHand != null) + ", RH=" + (rightHand != null));
         }
 
         Transform MakeLimb(string n, Vector3 localPos, Vector3 size)
@@ -121,6 +122,7 @@ namespace MartialArtsGame
 
         public void PlayAttack(MoveType type)
         {
+            Debug.Log("ProceduralMartialArtsAnimator PlayAttack: " + type + " on " + gameObject.name);
             if (attackRoutine != null) StopCoroutine(attackRoutine);
             attackRoutine = StartCoroutine(AttackRoutine(type));
         }

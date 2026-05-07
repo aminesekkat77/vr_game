@@ -12,17 +12,27 @@ namespace MartialArtsGame
             if (attacker == null || target == null) return false;
             Vector3 to = target.transform.position - attacker.position; to.y = 0f;
             float dist = to.magnitude;
-            if (dist > move.range) return false;
+            if (dist > move.range) 
+            {
+                //Debug.Log($"Punch missed: out of range ({dist} > {move.range})");
+                return false;
+            }
             float ang = Vector3.Angle(attacker.forward, to);
-            if (ang > HitArcDeg) return false;
+            if (ang > HitArcDeg) 
+            {
+                //Debug.Log($"Punch missed: angle too wide ({ang} > {HitArcDeg})");
+                return false;
+            }
             // AI may block/dodge.
             if (target.TryDefend())
             {
+                //Debug.Log("Punch missed: AI defended");
                 ScoreAndStatsManager.Notify("ai_defended");
                 if (MartialArtsHUD.Instance != null) MartialArtsHUD.Instance.ShowFeedback("AI blocked!");
                 return false;
             }
             float dmg = move.damage * damageMul;
+            Debug.Log($"Punch hit for {dmg} damage");
             target.TakeDamage(dmg, attacker.position);
             ScoreAndStatsManager.Hit(move, dmg);
             if (MartialArtsHUD.Instance != null) MartialArtsHUD.Instance.ShowComboText(move.displayName + "!");
