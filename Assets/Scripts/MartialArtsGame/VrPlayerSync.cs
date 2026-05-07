@@ -1,20 +1,15 @@
 using UnityEngine;
-#if XR_CORE_UTILS_PRESENT || true
-using Unity.XR.CoreUtils;
-#endif
 
 namespace MartialArtsGame
 {
-    // Keeps the XR Origin's ground footprint aligned with the PlayerCombat
-    // controller's transform. The Player object owns gameplay logic (movement,
-    // health, faceOpponent), the XR Origin owns headset tracking. By syncing
-    // XR Origin's XZ to the player's XZ each frame, the HMD-tracked head pose
-    // ends up at the right world position above the player's feet — and WASD /
-    // FaceOpponent / dodge all transparently move the user too.
+    // Keeps the XR Origin's XZ footprint aligned with the PlayerCombat
+    // controller's transform so WASD / FaceOpponent / dodge transparently
+    // move the headset in world space too.
     //
-    // Also forces the tracking origin mode to Floor on Start so the Quest /
-    // headset reports a real eye height (otherwise the camera ends up at y=0
-    // because the rig has no manual eye offset applied).
+    // We deliberately do NOT touch the XR Origin's Y position or its tracking
+    // origin mode — leave those as configured in the scene's XR Origin
+    // component. Forcing Floor mode at runtime caused Quest 3 to lose the
+    // Camera Offset's Y bias and drop the camera to the ground.
     [DefaultExecutionOrder(450)]
     public class VrPlayerSync : MonoBehaviour
     {
@@ -23,31 +18,24 @@ namespace MartialArtsGame
         public Transform player;
 
         [Header("Tuning")]
-        public float floorY = 0f;
         public bool syncRotation = true;
-        public bool forceFloorTrackingMode = true;
+        // If your XR Origin's Y is non-zero in the scene (e.g. because the
+        // dojo floor is above world Y=0), set this so the rig stays at the
+        // correct elevation. Default: keep whatever the XR Origin already had.
+        public bool overrideY = false;
+        public float overrideYValue = 0f;
 
         void Start()
         {
             EnsureRefs();
-#if XR_CORE_UTILS_PRESENT || true
-            if (forceFloorTrackingMode && xrOriginRoot != null)
-            {
-                var origin = xrOriginRoot.GetComponent<XROrigin>();
-                if (origin != null)
-                {
-                    origin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
-                }
-            }
-#endif
-            // Snap once so the user spawns at the player's feet on the first frame.
-            ApplySync(snap: true);
+            // Snap once so the user spawns above the player's feet on frame 1.
+            ApplySync();
         }
 
         void LateUpdate()
         {
             EnsureRefs();
-            ApplySync(snap: false);
+            ApplySync();
         }
 
         void EnsureRefs()
@@ -64,13 +52,14 @@ namespace MartialArtsGame
             }
         }
 
-        void ApplySync(bool snap)
+        void ApplySync()
         {
             if (xrOriginRoot == null || player == null) return;
-            if (!xrOriginRoot.gameObject.activeInHierarchy && !snap) return;
+            if (!xrOriginRoot.gameObject.activeInHierarchy) return;
 
             var p = player.position;
-            xrOriginRoot.position = new Vector3(p.x, floorY, p.z);
+            float y = overrideY ? overrideYValue : xrOriginRoot.position.y;
+            xrOriginRoot.position = new Vector3(p.x, y, p.z);
             if (syncRotation)
             {
                 xrOriginRoot.rotation = Quaternion.Euler(0f, player.eulerAngles.y, 0f);

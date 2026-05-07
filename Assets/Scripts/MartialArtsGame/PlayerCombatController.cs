@@ -140,6 +140,20 @@ namespace MartialArtsGame
             return false;
         }
 
+        static Vector2 ReadXrStick(bool right)
+        {
+            var side = right ? InputDeviceCharacteristics.Right : InputDeviceCharacteristics.Left;
+            InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.Controller | side, s_XrDeviceBuf);
+            for (int i = 0; i < s_XrDeviceBuf.Count; i++)
+            {
+                if (s_XrDeviceBuf[i].TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 v))
+                {
+                    if (v.sqrMagnitude > 0.0001f) return v;
+                }
+            }
+            return Vector2.zero;
+        }
+
         void HandleMovement()
         {
             float h = Input.GetAxisRaw("Horizontal");
@@ -157,6 +171,19 @@ namespace MartialArtsGame
                 bool forward = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Z);
                 bool backward = Input.GetKey(KeyCode.S);
                 v = (forward ? 1f : 0f) - (backward ? 1f : 0f);
+            }
+
+            // Quest thumbsticks. Left stick drives translation; right stick is
+            // ignored here so the head-tracked turning stays in user control.
+            // Falls through to the keyboard when no controller is connected.
+            if (Mathf.Abs(h) < 0.0001f && Mathf.Abs(v) < 0.0001f)
+            {
+                Vector2 stick = ReadXrStick(false);
+                if (stick.sqrMagnitude > 0.04f) // small deadzone
+                {
+                    h = stick.x;
+                    v = stick.y;
+                }
             }
 
             Vector3 dir = (transform.right * h + transform.forward * v).normalized;
