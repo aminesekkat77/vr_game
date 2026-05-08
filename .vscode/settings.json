@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "vr_game.slnx"
+    "dotnet.defaultSolution": "VR_karate_initial.slnx"
 }

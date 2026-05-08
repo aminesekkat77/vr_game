@@ -18,7 +18,12 @@ namespace MartialArtsGame
         public Transform player;
 
         [Header("Tuning")]
-        public bool syncRotation = true;
+        // Off by default: writing the rig's rotation each frame overrides the
+        // HMD pose driver (locking head turn) AND swings the controllers
+        // around the player's pivot, which the user perceives as "the laser
+        // direction rotates but its start point doesn't follow my hand."
+        // Leave the rig's yaw to the headset.
+        public bool syncRotation = false;
         // If your XR Origin's Y is non-zero in the scene (e.g. because the
         // dojo floor is above world Y=0), set this so the rig stays at the
         // correct elevation. Default: keep whatever the XR Origin already had.
